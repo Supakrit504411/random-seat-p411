@@ -61,12 +61,15 @@
       font-size: 2.5em;
       flex-shrink: 0;
       overflow: hidden;
+      border: 6px solid white;
+      padding: 4px;
     }
     
     .school-logo img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      border-radius: 50%;
     }
     
     .header-text {
@@ -136,7 +139,8 @@
       border-radius: 15px;
       padding: 25px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      max-height: 85%;
+      height: fit-content;
+      min-height: 600px;
       overflow-y: auto;
     }
     
@@ -271,7 +275,7 @@
       border-radius: 15px;
       padding: 30px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      min-height: 400px;
+      min-height: 600px;
       overflow-x: auto;
     }
     
@@ -645,7 +649,7 @@
     .custom-image-area {
       text-align: center;
       margin-bottom: 20px;
-      min-height: 300px;
+      min-height: 200px;
       background: linear-gradient(135deg, #e0f7ff 0%, #ffffff 100%);
       border-radius: 15px;
       display: flex;
@@ -654,53 +658,22 @@
       justify-content: center;
       border: 2px dashed #4facfe;
       padding: 20px;
-      cursor: pointer;
-      position: relative;
       overflow: hidden;
     }
     
-    .image-preview {
-      display: none;
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      top: 0;
-      left: 0;
-      padding: 10px;
-      box-sizing: border-box;
-    }
-    
-    .image-preview img {
-      width: 100%;
-      height: 100%;
+    .custom-image-area img {
+      max-width: 100%;
+      max-height: 250px;
       object-fit: contain;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
     
-    .image-remove-btn {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      background: #f56565;
-      color: white;
+    .custom-image-area.has-image {
+      background: white;
       border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      cursor: pointer;
-      font-size: 1.3em;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      z-index: 10;
-    }
-    
-    .image-placeholder {
-      color: #4facfe;
-      font-size: 3em;
-    }
-    
-    .image-instruction {
-      color: #4facfe;
-      margin: 10px 0 0 0;
-      font-size: 0.9em;
+      padding: 0;
+      min-height: auto;
     }
     
     /* Responsive Styles */
@@ -716,7 +689,7 @@
       }
       
       .control-panel {
-        max-height: none;
+        min-height: auto;
       }
       
       .seat {
@@ -971,8 +944,8 @@
       🏫
      </div>
      <div class="header-text">
-      <h1 id="appTitle">🎲 สุ่มที่นั่งนักเรียน</h1>
-      <p id="instructionText">กรอกข้อมูลและกดสุ่มที่นั่ง</p>
+      <h1 id="appTitle">สุ่มที่นั่งนักเรียน</h1>
+      <p id="instructionText">🎲Random Seat🎲</p>
      </div>
     </div>
    </div>
@@ -1039,13 +1012,7 @@
         </div>
        </div>
       </div>
-      <div id="customImageArea" class="custom-image-area" onclick="document.getElementById('imageUpload').click()"><input type="file" id="imageUpload" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
-       <div id="imagePreview" class="image-preview"><img id="uploadedImage"> <button onclick="removeImage(event)" class="image-remove-btn">✕</button>
-       </div>
-       <div id="imagePlaceholder" class="image-placeholder">
-        🖼️
-       </div>
-       <p id="imageInstruction" class="image-instruction">คลิกเพื่ออัปโหลดรูปภาพ</p>
+      <div id="customImageArea" class="custom-image-area"><img id="classroomImage" style="display: none;">
       </div>
       <div class="board">
        🎓 กระดานหน้าชั้นเรียน
@@ -1125,6 +1092,7 @@
     let currentEditingRecord = null;
     let uploadedImageData = null;
     let schoolLogoUrl = '';
+    let classroomImageUrl = 'https://img5.pic.in.th/file/secure-sv1/LINE_ALBUM_Reading-and-Writing-Test-1st-Semester_251110_1.jpg';
 
     // Timezone: Thailand is UTC+7
     function toThaiDate(dateString) {
@@ -1162,10 +1130,15 @@
         const data = await response.json();
         if (data.success && data.config) {
           schoolLogoUrl = data.config.school_logo_url || '';
+          // Don't override the hardcoded classroom image URL
+          // classroomImageUrl = data.config.classroom_image_url || classroomImageUrl;
           updateSchoolLogo();
+          updateClassroomImage();
         }
       } catch (error) {
         console.error('Error fetching config:', error);
+        // Still try to load the default image
+        updateClassroomImage();
       }
     }
 
@@ -1175,6 +1148,28 @@
         logoElement.innerHTML = `<img src="${schoolLogoUrl}" alt="School Logo">`;
       } else {
         logoElement.innerHTML = '🏫';
+      }
+    }
+
+    function updateClassroomImage() {
+      const imageElement = document.getElementById('classroomImage');
+      const imageArea = document.getElementById('customImageArea');
+      
+      if (classroomImageUrl && classroomImageUrl.trim() !== '') {
+        imageElement.src = classroomImageUrl;
+        imageElement.style.display = 'block';
+        imageArea.classList.add('has-image');
+        imageElement.onload = function() {
+          console.log('✅ โหลดรูปภาพหัวกระดาษสำเร็จ');
+        };
+        imageElement.onerror = function() {
+          console.error('❌ ไม่สามารถโหลดรูปภาพหัวกระดาษได้:', classroomImageUrl);
+          imageElement.style.display = 'none';
+          imageArea.classList.remove('has-image');
+        };
+      } else {
+        imageElement.style.display = 'none';
+        imageArea.classList.remove('has-image');
       }
     }
 
@@ -1252,17 +1247,7 @@
           console.log('📊 จำนวนรายชื่อนักเรียน:', studentLists.length);
           console.log('📊 จำนวนกิจกรรม:', activityRecords.length);
           
-          // Show success toast
-          Swal.fire({
-            icon: 'success',
-            title: '✅ เชื่อมต่อสำเร็จ',
-            text: `โหลดข้อมูล ${allRecords.length} รายการ`,
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-          });
+          return true; // Return success indicator
         } else {
           throw new Error(data?.message || 'Failed to fetch data');
         }
@@ -1282,81 +1267,15 @@
         renderHistory();
         updateStudentListDropdown();
         
-        // Show detailed error message
-        Swal.fire({
-          icon: 'error',
-          title: '❌ ไม่สามารถโหลดข้อมูลได้',
-          html: `
-            <div style="text-align: left; padding: 10px;">
-              <p style="margin-bottom: 15px; color: #f56565; font-weight: 600;">⚠️ ข้อผิดพลาด: ${error.message}</p>
-              
-              <hr style="margin: 15px 0; border: none; border-top: 1px solid #e0e0e0;">
-              
-              <p style="margin-bottom: 15px;"><strong>🔍 ขั้นตอนการแก้ไข:</strong></p>
-              
-              <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <p style="margin: 0 0 10px 0; font-weight: 600; color: #856404;">1️⃣ ตรวจสอบ Google Apps Script</p>
-                <ol style="padding-left: 20px; margin: 0; line-height: 1.8; color: #856404;">
-                  <li>เปิด Google Apps Script ที่ URL ด้านล่าง</li>
-                  <li>คลิก <strong>Deploy</strong> → <strong>Test deployments</strong></li>
-                  <li>คัดลอก URL ที่ขึ้นต้นด้วย <code>https://script.google.com/macros/s/...</code></li>
-                  <li>ทดสอบเปิด URL นั้นในเบราว์เซอร์ใหม่</li>
-                  <li>ถ้าเห็นข้อความ error → ต้อง Deploy ใหม่</li>
-                </ol>
-              </div>
-              
-              <div style="background: #d1ecf1; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <p style="margin: 0 0 10px 0; font-weight: 600; color: #0c5460;">2️⃣ Deploy ใหม่ (ถ้าจำเป็น)</p>
-                <ol style="padding-left: 20px; margin: 0; line-height: 1.8; color: #0c5460;">
-                  <li>คลิก <strong>Deploy</strong> → <strong>New deployment</strong></li>
-                  <li>เลือก Type: <strong>Web app</strong></li>
-                  <li>Execute as: <strong>Me</strong></li>
-                  <li>Who has access: <strong>Anyone</strong></li>
-                  <li>คลิก <strong>Deploy</strong></li>
-                  <li>คัดลอก URL ใหม่และอัปเดตในโค้ด</li>
-                </ol>
-              </div>
-              
-              <div style="background: #d4edda; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <p style="margin: 0 0 10px 0; font-weight: 600; color: #155724;">3️⃣ ทดสอบการเชื่อมต่อ</p>
-                <ol style="padding-left: 20px; margin: 0; line-height: 1.8; color: #155724;">
-                  <li>เปิด URL ของ Google Apps Script ในเบราว์เซอร์</li>
-                  <li>เพิ่ม <code>?action=getAll</code> ท้าย URL</li>
-                  <li>ควรเห็น JSON response แบบนี้: <code>{"success":true,"data":[...]}</code></li>
-                  <li>ถ้าเห็น error หรือ HTML → ต้องแก้ไข Script</li>
-                </ol>
-              </div>
-              
-              <hr style="margin: 15px 0; border: none; border-top: 1px solid #e0e0e0;">
-              
-              <p style="margin-top: 15px; color: #ed8936;"><strong>🔧 ข้อมูลสำหรับแก้ไข:</strong></p>
-              <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 0.85em; word-break: break-all;">
-                <p style="margin: 5px 0;"><strong>Sheet ID:</strong><br>1rTApgGGudZnNyPcCG8PefRakSpHnHHCLtr59lRSx1tE</p>
-                <p style="margin: 5px 0;"><strong>Script URL:</strong><br>${GOOGLE_SCRIPT_URL}</p>
-              </div>
-              
-              <hr style="margin: 15px 0; border: none; border-top: 1px solid #e0e0e0;">
-              
-              <p style="margin-top: 15px; color: #48bb78;"><strong>ℹ️ หมายเหตุ:</strong></p>
-              <p style="padding-left: 20px; line-height: 1.6; color: #666; margin: 0;">คุณยังสามารถใช้งานแอปได้ แต่จะไม่สามารถบันทึกหรือโหลดข้อมูลจาก Google Sheets ได้จนกว่าจะแก้ไขปัญหา</p>
-            </div>
-          `,
-          width: '700px',
-          confirmButtonText: '🔄 ลองใหม่อีกครั้ง',
-          showCancelButton: true,
-          cancelButtonText: 'ใช้งานต่อ (ไม่บันทึก)',
-          confirmButtonColor: '#667eea',
-          cancelButtonColor: '#48bb78'
-        }).then((result) => {
-          if (result.isConfirmed) {
-            location.reload();
-          }
-        });
+        return false; // Return failure indicator
       }
     }
 
     async function saveToGoogleSheets(data) {
       try {
+        console.log('📤 กำลังบันทึกข้อมูล...', data);
+        
+        // Use no-cors mode for POST requests
         const response = await fetch(GOOGLE_SCRIPT_URL, {
           method: 'POST',
           mode: 'no-cors',
@@ -1369,17 +1288,27 @@
           })
         });
         
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        console.log('✅ ส่งคำขอบันทึกสำเร็จ');
+        
+        // Wait for data to be saved (no-cors doesn't return response)
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Fetch updated data
+        console.log('🔄 กำลังโหลดข้อมูลใหม่...');
         await fetchAllData();
+        
+        console.log('✅ บันทึกข้อมูลสำเร็จ');
         return { success: true };
       } catch (error) {
-        console.error('Error saving data:', error);
+        console.error('❌ Error saving data:', error);
         return { success: false, error: error.message };
       }
     }
 
     async function updateGoogleSheets(id, data) {
       try {
+        console.log('📤 กำลังอัปเดตข้อมูล...', { id, data });
+        
         const response = await fetch(GOOGLE_SCRIPT_URL, {
           method: 'POST',
           mode: 'no-cors',
@@ -1393,11 +1322,19 @@
           })
         });
         
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        console.log('✅ ส่งคำขออัปเดตสำเร็จ');
+        
+        // Wait for data to be updated
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Fetch updated data
+        console.log('🔄 กำลังโหลดข้อมูลใหม่...');
         await fetchAllData();
+        
+        console.log('✅ อัปเดตข้อมูลสำเร็จ');
         return { success: true };
       } catch (error) {
-        console.error('Error updating data:', error);
+        console.error('❌ Error updating data:', error);
         return { success: false, error: error.message };
       }
     }
@@ -1425,41 +1362,7 @@
       }
     }
 
-    function handleImageUpload(event) {
-      const file = event.target.files[0];
-      if (file) {
-        if (file.size > 5 * 1024 * 1024) {
-          Swal.fire({
-            icon: 'warning',
-            title: '⚠️ ไฟล์ใหญ่เกินไป',
-            text: 'กรุณาเลือกรูปภาพที่มีขนาดไม่เกิน 5 MB',
-            confirmButtonText: 'ตกลง',
-            confirmButtonColor: '#667eea'
-          });
-          return;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          uploadedImageData = e.target.result;
-          document.getElementById('uploadedImage').src = uploadedImageData;
-          document.getElementById('imagePreview').style.display = 'block';
-          document.getElementById('imagePlaceholder').style.display = 'none';
-          document.getElementById('imageInstruction').style.display = 'none';
-        };
-        reader.readAsDataURL(file);
-      }
-    }
 
-    function removeImage(event) {
-      event.stopPropagation();
-      uploadedImageData = null;
-      document.getElementById('uploadedImage').src = '';
-      document.getElementById('imagePreview').style.display = 'none';
-      document.getElementById('imagePlaceholder').style.display = 'block';
-      document.getElementById('imageInstruction').style.display = 'block';
-      document.getElementById('imageUpload').value = '';
-    }
 
     function switchTab(tabName) {
       const tabs = document.querySelectorAll('.tab');
@@ -1967,108 +1870,129 @@
       
       let result;
       
-      if (currentEditingRecord) {
-        const updateData = {
-          type: 'activity',
-          list_name: selectedList ? selectedList.list_name : '',
-          teacher_name: teacherName,
-          semester: semester,
-          additional_details: additionalDetails,
-          start_date: startDate,
-          end_date: endDate,
-          rows: currentRows,
-          cols: currentCols,
-          row_gaps: rowGapsInput,
-          col_gaps: colGapsInput,
-          student_names: currentStudentNames.join('\n'),
-          assignments: JSON.stringify(assignments),
-          last_edited_at: currentDateTime
-        };
+      try {
+        // Add timeout protection (30 seconds)
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('การบันทึกใช้เวลานานเกินไป (timeout)')), 30000)
+        );
         
-        result = await updateGoogleSheets(currentEditingRecord.id, updateData);
-      } else {
-        const activityName = `สุ่มที่นั่ง ${selectedList ? selectedList.list_name : ''} - ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Bangkok' })}`;
+        if (currentEditingRecord) {
+          const updateData = {
+            type: 'activity',
+            list_name: selectedList ? selectedList.list_name : '',
+            teacher_name: teacherName,
+            semester: semester,
+            additional_details: additionalDetails,
+            start_date: startDate,
+            end_date: endDate,
+            rows: currentRows,
+            cols: currentCols,
+            row_gaps: rowGapsInput,
+            col_gaps: colGapsInput,
+            student_names: currentStudentNames.join('\n'),
+            assignments: JSON.stringify(assignments),
+            last_edited_at: currentDateTime
+          };
+          
+          result = await Promise.race([
+            updateGoogleSheets(currentEditingRecord.id, updateData),
+            timeoutPromise
+          ]);
+        } else {
+          const activityName = `สุ่มที่นั่ง ${selectedList ? selectedList.list_name : ''} - ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Bangkok' })}`;
+          
+          const record = {
+            type: 'activity',
+            activity_name: activityName,
+            list_name: selectedList ? selectedList.list_name : '',
+            teacher_name: teacherName,
+            semester: semester,
+            additional_details: additionalDetails,
+            start_date: startDate,
+            end_date: endDate,
+            rows: currentRows,
+            cols: currentCols,
+            paired_rows: '',
+            paired_cols: '',
+            row_gaps: rowGapsInput,
+            col_gaps: colGapsInput,
+            student_names: currentStudentNames.join('\n'),
+            assignments: JSON.stringify(assignments),
+            created_at: currentDateTime,
+            last_edited_at: '',
+            original_backend_id: ''
+          };
+          
+          result = await Promise.race([
+            saveToGoogleSheets(record),
+            timeoutPromise
+          ]);
+        }
         
-        const record = {
-          type: 'activity',
-          activity_name: activityName,
-          list_name: selectedList ? selectedList.list_name : '',
-          teacher_name: teacherName,
-          semester: semester,
-          additional_details: additionalDetails,
-          start_date: startDate,
-          end_date: endDate,
-          rows: currentRows,
-          cols: currentCols,
-          paired_rows: '',
-          paired_cols: '',
-          row_gaps: rowGapsInput,
-          col_gaps: colGapsInput,
-          student_names: currentStudentNames.join('\n'),
-          assignments: JSON.stringify(assignments),
-          created_at: currentDateTime,
-          last_edited_at: '',
-          original_backend_id: ''
-        };
+        if (result.success) {
+          currentEditingRecord = null;
+          
+          // Clear all data after successful save
+          assignments = [];
+          usedSeats.clear();
+          availableStudents = [];
+          isRandomized = false;
+          disabledSeats.clear();
+          
+          // Reset form fields
+          document.getElementById('studentListSelect').value = '';
+          document.getElementById('teacherName').value = '';
+          document.getElementById('semester1').checked = false;
+          document.getElementById('semester2').checked = false;
+          document.getElementById('semesterOther').checked = false;
+          document.getElementById('semesterOtherText').style.display = 'none';
+          document.getElementById('semesterOtherText').value = '';
+          document.getElementById('semester').value = '';
+          document.getElementById('additionalDetails').value = '';
+          document.getElementById('startDate').value = '';
+          document.getElementById('endDate').value = '';
+          
+          // Hide save button and classroom info
+          document.getElementById('saveBtn').style.display = 'none';
+          document.getElementById('classroomInfo').style.display = 'none';
+          
+          // Update student count
+          updateStudentCount();
+          
+          // Update seats grid
+          updateSeatsGrid();
+          
+          Swal.fire({
+            icon: 'success',
+            title: '✅ บันทึกสำเร็จ',
+            html: '<p>บันทึกกิจกรรมเรียบร้อยแล้ว</p><p>คุณสามารถดูประวัติและดาวน์โหลดภาพได้ในแท็บ "📋 ประวัติการสุ่ม"</p><p style="color: #48bb78; font-weight: 600; margin-top: 10px;">✨ ระบบพร้อมให้คุณเริ่มสุ่มที่นั่งใหม่แล้ว</p>',
+            confirmButtonText: 'ตกลง',
+            confirmButtonColor: '#48bb78'
+          });
+        } else {
+          throw new Error('การบันทึกล้มเหลว');
+        }
+      } catch (error) {
+        console.error('❌ Error saving activity:', error);
         
-        result = await saveToGoogleSheets(record);
-      }
-      
-      if (result.success) {
-        currentEditingRecord = null;
-        
-        // Clear all data after successful save
-        assignments = [];
-        usedSeats.clear();
-        availableStudents = [];
-        isRandomized = false;
-        disabledSeats.clear();
-        uploadedImageData = null;
-        
-        // Reset form fields
-        document.getElementById('studentListSelect').value = '';
-        document.getElementById('teacherName').value = '';
-        document.getElementById('semester1').checked = false;
-        document.getElementById('semester2').checked = false;
-        document.getElementById('semesterOther').checked = false;
-        document.getElementById('semesterOtherText').style.display = 'none';
-        document.getElementById('semesterOtherText').value = '';
-        document.getElementById('semester').value = '';
-        document.getElementById('additionalDetails').value = '';
-        document.getElementById('startDate').value = '';
-        document.getElementById('endDate').value = '';
-        
-        // Reset image upload
-        document.getElementById('uploadedImage').src = '';
-        document.getElementById('imagePreview').style.display = 'none';
-        document.getElementById('imagePlaceholder').style.display = 'block';
-        document.getElementById('imageInstruction').style.display = 'block';
-        document.getElementById('imageUpload').value = '';
-        
-        // Hide save button and classroom info
-        document.getElementById('saveBtn').style.display = 'none';
-        document.getElementById('classroomInfo').style.display = 'none';
-        
-        // Update student count
-        updateStudentCount();
-        
-        // Update seats grid
-        updateSeatsGrid();
-        
-        Swal.fire({
-          icon: 'success',
-          title: '✅ บันทึกสำเร็จ',
-          html: '<p>บันทึกกิจกรรมเรียบร้อยแล้ว</p><p>คุณสามารถดูประวัติและดาวน์โหลดภาพได้ในแท็บ "📋 ประวัติการสุ่ม"</p><p style="color: #48bb78; font-weight: 600; margin-top: 10px;">✨ ระบบพร้อมให้คุณเริ่มสุ่มที่นั่งใหม่แล้ว</p>',
-          confirmButtonText: 'ตกลง',
-          confirmButtonColor: '#48bb78'
-        });
-      } else {
         Swal.fire({
           icon: 'error',
           title: '❌ เกิดข้อผิดพลาด',
-          text: 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง',
+          html: `
+            <p>ไม่สามารถบันทึกข้อมูลได้</p>
+            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">ข้อผิดพลาด: ${error.message}</p>
+            <hr style="margin: 15px 0; border: none; border-top: 1px solid #e0e0e0;">
+            <p style="font-size: 0.85em; color: #666; text-align: left; line-height: 1.6;">
+              <strong>💡 วิธีแก้ไข:</strong><br>
+              1. ตรวจสอบว่าเชื่อมต่อ Google Sheets สำเร็จหรือไม่<br>
+              2. ตรวจสอบ Google Apps Script ว่า Deploy ถูกต้อง<br>
+              3. ลองรีเฟรชหน้าเว็บแล้วบันทึกใหม่<br>
+              4. ตรวจสอบ Console (F12) เพื่อดูรายละเอียดข้อผิดพลาด
+            </p>
+          `,
           confirmButtonText: 'ตกลง',
-          confirmButtonColor: '#667eea'
+          confirmButtonColor: '#667eea',
+          width: '600px'
         });
       }
     }
@@ -2225,6 +2149,48 @@
       }
     }
 
+    // Helper function to convert image URL to Base64
+    async function imageUrlToBase64(url) {
+      try {
+        console.log('🔄 กำลังแปลงรูปภาพเป็น Base64...', url);
+        
+        // For Google Drive links, convert to direct download link
+        let processedUrl = url;
+        if (url.includes('drive.google.com')) {
+          const fileIdMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+          if (fileIdMatch) {
+            processedUrl = `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
+            console.log('🔄 แปลง Google Drive URL:', processedUrl);
+          }
+        }
+        
+        // Try to fetch the image
+        const response = await fetch(processedUrl, {
+          mode: 'cors',
+          cache: 'no-cache'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            console.log('✅ แปลงรูปภาพเป็น Base64 สำเร็จ');
+            resolve(reader.result);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      } catch (error) {
+        console.error('❌ Error converting image to Base64:', error);
+        return null;
+      }
+    }
+
     function renderStudentLists() {
       const container = document.getElementById('studentListsContainer');
       
@@ -2266,147 +2232,253 @@
     }
 
     async function downloadAsImage(record) {
-      Swal.fire({
-        title: '📥 กำลังสร้างภาพ',
-        text: 'กำลังสร้างภาพ กรุณารอสักครู่...',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        showConfirmButton: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
-      });
-      
-      const captureArea = document.getElementById('captureArea');
-      
-      const pairedRowsArray = record.paired_rows 
-        ? record.paired_rows.split(',').map(r => parseInt(r.trim())).filter(r => !isNaN(r))
-        : [];
-      const pairedColsArray = record.paired_cols 
-        ? record.paired_cols.split(',').map(c => parseInt(c.trim())).filter(c => !isNaN(c))
-        : [];
-      const rowGapsArray = record.row_gaps 
-        ? record.row_gaps.split(',').map(r => parseInt(r.trim())).filter(r => !isNaN(r))
-        : [];
-      const colGapsArray = record.col_gaps 
-        ? record.col_gaps.split(',').map(c => parseInt(c.trim())).filter(c => !isNaN(c))
-        : [];
-      
-      const pairedRowsSetLocal = new Set(pairedRowsArray);
-      const pairedColsSetLocal = new Set(pairedColsArray);
-      const rowGapsSetLocal = new Set(rowGapsArray);
-      const colGapsSetLocal = new Set(colGapsArray);
-      
-      const assignmentsData = JSON.parse(record.assignments);
-      
-      const imageHTML = uploadedImageData ? `
-        <div style="text-align: center; margin-bottom: 20px; display: flex; justify-content: center; align-items: center;">
-          <img src="${uploadedImageData}" style="max-width: 100%; max-height: 200px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-        </div>
-      ` : '';
-      
-      const logoHTML = schoolLogoUrl && schoolLogoUrl.trim() !== '' 
-        ? `<img src="${schoolLogoUrl}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;">`
-        : '🏫';
-      
-      captureArea.innerHTML = `
-        <div class="capture-area">
-          <div class="capture-header">
-            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px;">
-              <div style="width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-size: 2em; overflow: hidden;">
-                ${logoHTML}
-              </div>
-              <h2 style="margin: 0;">🎲 ผังที่นั่งนักเรียน</h2>
-            </div>
-            <div class="capture-info">
-              <div class="info-item">
-                <span class="info-label">กิจกรรม:</span>
-                <span>${record.activity_name}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">รายชื่อ:</span>
-                <span>${record.list_name || '-'}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">ครูประจำชั้น:</span>
-                <span>${record.teacher_name || '-'}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">ภาคเรียน:</span>
-                <span>${record.semester && record.semester.trim() !== '' ? record.semester : '-'}</span>
-              </div>
-              <div class="info-item" style="grid-column: 1 / -1;">
-                <span class="info-label">ระยะเวลา:</span>
-                <span>${record.start_date && record.end_date ? `${toThaiDate(record.start_date)} ถึง ${toThaiDate(record.end_date)}` : '-'}</span>
-              </div>
-              ${record.additional_details ? `<div class="info-item" style="grid-column: 1 / -1;">
-                <span class="info-label">รายละเอียด:</span>
-                <span>${record.additional_details}</span>
-              </div>` : ''}
-            </div>
-          </div>
-          ${imageHTML}
-          <div class="board" style="background: #2d3748; color: white; text-align: center; padding: 15px; border-radius: 10px; margin-bottom: 20px; font-size: 1.2em; font-weight: 600;">🎓 กระดานหน้าชั้นเรียน</div>
-          <div class="seats-grid" style="display: grid; gap: 0; justify-content: center; margin: 0 auto; grid-template-columns: repeat(${record.cols + colGapsSetLocal.size}, minmax(100px, 1fr)); grid-template-rows: repeat(${record.rows + rowGapsSetLocal.size}, auto);">
-            ${generateSeatsHTML(record.rows, record.cols, assignmentsData, pairedRowsSetLocal, pairedColsSetLocal, rowGapsSetLocal, colGapsSetLocal)}
-          </div>
-        </div>
-      `;
-      
-      captureArea.style.left = '0';
-      captureArea.style.top = '0';
-      
-      setTimeout(async () => {
-        try {
-          if (typeof html2canvas === 'undefined') {
-            throw new Error('html2canvas library not loaded');
-          }
-          
-          const canvas = await html2canvas(captureArea.firstElementChild, {
-            backgroundColor: '#ffffff',
-            scale: 2,
-            logging: false,
-            useCORS: true,
-            width: 1200,
-            windowWidth: 1200
-          });
-          
-          canvas.toBlob((blob) => {
-            if (blob) {
-              const url = URL.createObjectURL(blob);
-              const link = document.createElement('a');
-              const timestamp = toThaiDate(record.created_at).replace(/\s/g, '_');
-              link.download = `ผังที่นั่ง_${record.list_name}_${timestamp}.png`;
-              link.href = url;
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              URL.revokeObjectURL(url);
-              
-              Swal.fire({
-                icon: 'success',
-                title: '✅ ดาวน์โหลดสำเร็จ',
-                text: 'ดาวน์โหลดภาพผังที่นั่งเรียบร้อยแล้ว',
-                confirmButtonText: 'ตกลง',
-                confirmButtonColor: '#48bb78'
-              });
-            } else {
-              throw new Error('Failed to create blob');
-            }
-          }, 'image/png');
-        } catch (error) {
-          console.error('Error generating image:', error);
+      try {
+        if (typeof html2canvas === 'undefined') {
           Swal.fire({
             icon: 'error',
-            title: '❌ เกิดข้อผิดพลาด',
-            html: '<p>ไม่สามารถสร้างภาพได้ กรุณาลองใหม่อีกครั้ง</p><p style="font-size: 0.9em; color: #666;">หากปัญหายังคงอยู่ ลองรีเฟรชหน้าเว็บแล้วลองใหม่</p>',
+            title: '❌ ไม่พบไลบรารี',
+            html: '<p>ไม่สามารถโหลดไลบรารีสร้างภาพได้</p><p style="font-size: 0.9em; color: #666;">กรุณารีเฟรชหน้าเว็บแล้วลองใหม่</p>',
             confirmButtonText: 'ตกลง',
             confirmButtonColor: '#667eea'
           });
+          return;
+        }
+
+        Swal.fire({
+          title: '📥 กำลังสร้างภาพ',
+          text: 'กำลังสร้างผังที่นั่ง...',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+
+        const assignmentsData = JSON.parse(record.assignments);
+        
+        const pairedRowsSetLocal = new Set();
+        const pairedColsSetLocal = new Set();
+        
+        const rowGapsSetLocal = new Set();
+        if (record.row_gaps) {
+          const rowGaps = record.row_gaps.split(',').map(r => parseInt(r.trim())).filter(r => !isNaN(r));
+          rowGaps.forEach(r => rowGapsSetLocal.add(r));
         }
         
+        const colGapsSetLocal = new Set();
+        if (record.col_gaps) {
+          const colGaps = record.col_gaps.split(',').map(c => parseInt(c.trim())).filter(c => !isNaN(c));
+          colGaps.forEach(c => colGapsSetLocal.add(c));
+        }
+        
+        const totalGridCols = record.cols + colGapsSetLocal.size;
+        
+        let gridTemplateColumns = '';
+        for (let col = 1; col <= record.cols; col++) {
+          gridTemplateColumns += 'minmax(70px, 100px) ';
+          if (colGapsSetLocal.has(col)) {
+            gridTemplateColumns += '40px ';
+          }
+        }
+        
+        const seatsHTML = generateSeatsHTML(record.rows, record.cols, assignmentsData, pairedRowsSetLocal, pairedColsSetLocal, rowGapsSetLocal, colGapsSetLocal);
+        
+        // Create capture element directly in DOM
+        const captureArea = document.getElementById('captureArea');
+        captureArea.innerHTML = '';
+        captureArea.style.position = 'absolute';
+        captureArea.style.left = '0';
+        captureArea.style.top = '0';
+        captureArea.style.zIndex = '9999';
+        
+        // Create wrapper div with pastel border
+        const wrapperDiv = document.createElement('div');
+        wrapperDiv.style.cssText = `
+          background: linear-gradient(135deg, #ffeef8 0%, #e0f7ff 50%, #fff4e6 100%);
+          padding: 40px;
+          width: 1200px;
+          box-sizing: border-box;
+          border-radius: 20px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+          font-family: 'Sarabun', 'Segoe UI', Tahoma, sans-serif;
+        `;
+        
+        // Inner content wrapper with white background
+        const contentDiv = document.createElement('div');
+        contentDiv.style.cssText = `
+          background: white;
+          padding: 30px;
+          border-radius: 15px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        `;
+        
+        // Add classroom header image at the very top (using direct URL)
+        const headerImageUrl = 'https://img5.pic.in.th/file/secure-sv1/LINE_ALBUM_Reading-and-Writing-Test-1st-Semester_251110_1.jpg';
+        const headerImageDiv = document.createElement('div');
+        headerImageDiv.style.cssText = 'text-align: center; margin-bottom: 25px; overflow: hidden; border-radius: 10px; background: white;';
+        
+        const headerImage = document.createElement('img');
+        headerImage.crossOrigin = 'anonymous';
+        headerImage.src = headerImageUrl;
+        headerImage.style.cssText = 'max-width: 100%; height: auto; display: block; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1);';
+        
+        headerImageDiv.appendChild(headerImage);
+        contentDiv.appendChild(headerImageDiv);
+        
+        // Add activity details section
+        const detailsDiv = document.createElement('div');
+        detailsDiv.style.cssText = 'text-align: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 3px solid #e0e0e0;';
+        
+        let detailsHTML = `
+          <h2 style="color: #4facfe; margin: 0 0 15px 0; font-size: 2em; font-weight: 700;">📋 ${record.activity_name || 'ผังที่นั่งนักเรียน'}</h2>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 1em; color: #555; text-align: left; max-width: 900px; margin: 0 auto; background: #f8f9fa; padding: 20px; border-radius: 10px;">
+            <div style="display: flex; gap: 8px; align-items: flex-start;">
+              <span style="font-weight: 700; color: #333; flex-shrink: 0;">👥 รายชื่อ:</span>
+              <span style="font-weight: 500;">${record.list_name || '-'}</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: flex-start;">
+              <span style="font-weight: 700; color: #333; flex-shrink: 0;">👨‍🏫 ครูประจำชั้น:</span>
+              <span style="font-weight: 500;">${record.teacher_name || '-'}</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: flex-start;">
+              <span style="font-weight: 700; color: #333; flex-shrink: 0;">📚 ภาคเรียน:</span>
+              <span style="font-weight: 500;">${record.semester || '-'}</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: flex-start;">
+              <span style="font-weight: 700; color: #333; flex-shrink: 0;">📅 วันที่สร้าง:</span>
+              <span style="font-weight: 500;">${toThaiDate(record.created_at)}</span>
+            </div>
+        `;
+        
+        if (record.start_date && record.end_date) {
+          detailsHTML += `
+            <div style="display: flex; gap: 8px; align-items: flex-start; grid-column: 1 / -1;">
+              <span style="font-weight: 700; color: #333; flex-shrink: 0;">📆 ระยะเวลา:</span>
+              <span style="font-weight: 500;">${toThaiDate(record.start_date)} ถึง ${toThaiDate(record.end_date)}</span>
+            </div>
+          `;
+        }
+        
+        if (record.additional_details) {
+          detailsHTML += `
+            <div style="display: flex; gap: 8px; align-items: flex-start; grid-column: 1 / -1;">
+              <span style="font-weight: 700; color: #333; flex-shrink: 0;">📝 รายละเอียด:</span>
+              <span style="font-weight: 500;">${record.additional_details}</span>
+            </div>
+          `;
+        }
+        
+        detailsHTML += `</div>`;
+        detailsDiv.innerHTML = detailsHTML;
+        contentDiv.appendChild(detailsDiv);
+        
+        // Add board
+        const boardDiv = document.createElement('div');
+        boardDiv.style.cssText = 'background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%); color: white; text-align: center; padding: 18px; border-radius: 12px; margin-bottom: 30px; font-size: 1.3em; font-weight: 700; box-shadow: 0 4px 15px rgba(0,0,0,0.2);';
+        boardDiv.textContent = '🎓 กระดานหน้าชั้นเรียน';
+        contentDiv.appendChild(boardDiv);
+        
+        // Add seats grid
+        const seatsGridDiv = document.createElement('div');
+        seatsGridDiv.style.cssText = `display: grid; gap: 0; justify-content: center; margin: 0 auto; grid-template-columns: ${gridTemplateColumns.trim()};`;
+        seatsGridDiv.innerHTML = seatsHTML;
+        contentDiv.appendChild(seatsGridDiv);
+        
+        wrapperDiv.appendChild(contentDiv);
+        captureArea.appendChild(wrapperDiv);
+        
+        // Wait for image to load
+        await new Promise((resolve) => {
+          if (headerImage.complete) {
+            resolve();
+          } else {
+            headerImage.onload = resolve;
+            headerImage.onerror = resolve; // Continue even if image fails
+          }
+        });
+        
+        // Wait a bit more for rendering
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        console.log('📸 กำลังสร้างภาพด้วย html2canvas...');
+        const canvas = await html2canvas(wrapperDiv, {
+          backgroundColor: '#ffffff',
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          allowTaint: false
+        });
+        
+        captureArea.innerHTML = '';
+        captureArea.style.position = 'absolute';
         captureArea.style.left = '-9999px';
-      }, 500);
+        captureArea.style.top = '0';
+        
+        if (!canvas) {
+          throw new Error('ไม่สามารถสร้าง canvas ได้');
+        }
+        
+        console.log('💾 กำลังบันทึกไฟล์...');
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            const timestamp = toThaiDate(record.created_at).replace(/\s/g, '_');
+            link.download = `ผังที่นั่ง_${record.list_name}_${timestamp}.png`;
+            link.href = url;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            console.log('✅ ดาวน์โหลดสำเร็จ!');
+            
+            Swal.fire({
+              icon: 'success',
+              title: '✅ ดาวน์โหลดสำเร็จ',
+              text: 'ดาวน์โหลดภาพผังที่นั่งเรียบร้อยแล้ว',
+              confirmButtonText: 'ตกลง',
+              confirmButtonColor: '#48bb78'
+            });
+          } else {
+            throw new Error('ไม่สามารถสร้างไฟล์ภาพได้');
+          }
+        }, 'image/png');
+        
+      } catch (error) {
+        console.error('❌ Error generating image:', error);
+        
+        // Clean up
+        const captureArea = document.getElementById('captureArea');
+        if (captureArea) {
+          captureArea.innerHTML = '';
+          captureArea.style.position = 'absolute';
+          captureArea.style.left = '-9999px';
+          captureArea.style.top = '0';
+        }
+        
+        const errorMessage = error && error.message ? error.message : 'ไม่ทราบสาเหตุ';
+        
+        Swal.fire({
+          icon: 'error',
+          title: '❌ เกิดข้อผิดพลาด',
+          html: `
+            <p>ไม่สามารถสร้างภาพได้</p>
+            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">ข้อผิดพลาด: ${errorMessage}</p>
+            <hr style="margin: 15px 0; border: none; border-top: 1px solid #e0e0e0;">
+            <p style="font-size: 0.85em; color: #666; text-align: left; line-height: 1.6;">
+              <strong>💡 วิธีแก้ไข:</strong><br>
+              1. รีเฟรชหน้าเว็บแล้วลองใหม่<br>
+              2. ตรวจสอบว่ารูปภาพสามารถเข้าถึงได้<br>
+              3. ตรวจสอบ Console (F12) เพื่อดูรายละเอียดเพิ่มเติม
+            </p>
+          `,
+          confirmButtonText: 'ตกลง',
+          confirmButtonColor: '#667eea',
+          width: '600px'
+        });
+      }
     }
 
     function getMarginStyle(isPairedRow, isPairedCol, isNextRowPaired, isNextColPaired) {
@@ -2858,9 +2930,62 @@
       });
     }
 
-    fetchConfig();
-    fetchAllData();
-    updateSeatsGrid();
+    // Initial load
+    (async function() {
+      // Show loading message
+      Swal.fire({
+        title: '⏳ กำลังโหลดข้อมูล',
+        html: '<p>กรุณารอสักครู่...</p><p style="font-size: 0.9em; color: #666;">กำลังเชื่อมต่อกับ Google Sheets</p>',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+      
+      // Load default image first
+      updateClassroomImage();
+      
+      await fetchConfig();
+      
+      const loadSuccess = await fetchAllData();
+      
+      if (loadSuccess) {
+        Swal.fire({
+          icon: 'success',
+          title: '✅ เชื่อมต่อสำเร็จ',
+          text: `โหลดข้อมูล ${allRecords.length} รายการ`,
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
+      } else {
+        Swal.fire({
+          icon: 'warning',
+          title: '⚠️ ไม่สามารถเชื่อมต่อ Google Sheets',
+          html: `
+            <p>ไม่สามารถโหลดข้อมูลจาก Google Sheets ได้</p>
+            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">คุณยังสามารถใช้งานแอปได้ แต่จะไม่สามารถบันทึกหรือโหลดข้อมูลได้</p>
+            <hr style="margin: 15px 0; border: none; border-top: 1px solid #e0e0e0;">
+            <p style="font-size: 0.85em; color: #666; text-align: left;">
+              <strong>💡 วิธีแก้ไข:</strong><br>
+              1. ตรวจสอบ Google Apps Script URL<br>
+              2. ตรวจสอบว่า Deploy เป็น Web app แล้ว<br>
+              3. ตรวจสอบว่าตั้งค่า "Who has access" เป็น "Anyone"<br>
+              4. กด F12 เปิด Console ดูรายละเอียดข้อผิดพลาด
+            </p>
+          `,
+          confirmButtonText: 'ตกลง',
+          confirmButtonColor: '#667eea',
+          width: '600px'
+        });
+      }
+      
+      updateSeatsGrid();
+    })();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99c35fac73e6a190',t:'MTc2Mjc1NDg5MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99c52c0f05f9a192',t:'MTc2Mjc3Mzc0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
