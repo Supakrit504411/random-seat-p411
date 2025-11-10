@@ -1252,7 +1252,7 @@
           renderHistory();
           updateStudentListDropdown();
           
-          console.log('✅ เชื่อมต่อ Google Sheets สำเร็จ');
+          console.log('✅ เชื่อมต่อฐานข้อมูลสำเร็จ');
           console.log('📊 จำนวนรายชื่อนักเรียน:', studentLists.length);
           console.log('📊 จำนวนกิจกรรม:', activityRecords.length);
           
@@ -3010,7 +3010,7 @@
       // Show loading message
       Swal.fire({
         title: '⏳ กำลังโหลดข้อมูล',
-        html: '<p>กรุณารอสักครู่...</p><p style="font-size: 0.9em; color: #666;">กำลังเชื่อมต่อกับ Google Sheets</p>',
+        html: '<p>กรุณารอสักครู่...</p><p style="font-size: 0.9em; color: #666;">กำลังเชื่อมต่อกับฐานข้อมูล</p>',
         allowOutsideClick: false,
         allowEscapeKey: false,
         showConfirmButton: false,
@@ -3040,9 +3040,9 @@
       } else {
         Swal.fire({
           icon: 'warning',
-          title: '⚠️ ไม่สามารถเชื่อมต่อ Google Sheets',
+          title: '⚠️ ไม่สามารถเชื่อมต่อฐานข้อมูล',
           html: `
-            <p>ไม่สามารถโหลดข้อมูลจาก Google Sheets ได้</p>
+            <p>ไม่สามารถโหลดข้อมูลจากฐานข้อมูลได้</p>
             <p style="font-size: 0.9em; color: #666; margin-top: 10px;">คุณยังสามารถใช้งานแอปได้ แต่จะไม่สามารถบันทึกหรือโหลดข้อมูลได้</p>
             <hr style="margin: 15px 0; border: none; border-top: 1px solid #e0e0e0;">
             <p style="font-size: 0.85em; color: #666; text-align: left;">
