@@ -142,6 +142,15 @@
       height: fit-content;
       min-height: 600px;
       overflow-y: auto;
+      transition: opacity 0.3s ease;
+    }
+    
+    .control-panel input:disabled,
+    .control-panel textarea:disabled,
+    .control-panel select:disabled,
+    .control-panel button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
     }
     
     .section {
@@ -1175,7 +1184,7 @@
 
     async function fetchAllData() {
       try {
-        console.log('🔄 กำลังเชื่อมต่อ Google Sheets...');
+        console.log('🔄 กำลังเชื่อมต่อฐานข้อมูล...');
         console.log('📍 URL:', GOOGLE_SCRIPT_URL);
         
         // Method 1: Try direct fetch with no-cors first
@@ -1695,6 +1704,61 @@
 
     let availableStudents = [];
     let usedSeats = new Set();
+    let isFormLocked = false;
+
+    function lockForm() {
+      isFormLocked = true;
+      
+      // Disable all input fields
+      document.getElementById('studentListSelect').disabled = true;
+      document.getElementById('teacherName').disabled = true;
+      document.getElementById('semester1').disabled = true;
+      document.getElementById('semester2').disabled = true;
+      document.getElementById('semesterOther').disabled = true;
+      document.getElementById('semesterOtherText').disabled = true;
+      document.getElementById('additionalDetails').disabled = true;
+      document.getElementById('startDate').disabled = true;
+      document.getElementById('endDate').disabled = true;
+      document.getElementById('rows').disabled = true;
+      document.getElementById('cols').disabled = true;
+      document.getElementById('rowGaps').disabled = true;
+      document.getElementById('colGaps').disabled = true;
+      document.getElementById('updateSeats').disabled = true;
+      
+      // Add visual indication
+      const controlPanel = document.querySelector('.control-panel');
+      if (controlPanel) {
+        controlPanel.style.opacity = '0.6';
+        controlPanel.style.pointerEvents = 'none';
+      }
+    }
+
+    function unlockForm() {
+      isFormLocked = false;
+      
+      // Enable all input fields
+      document.getElementById('studentListSelect').disabled = false;
+      document.getElementById('teacherName').disabled = false;
+      document.getElementById('semester1').disabled = false;
+      document.getElementById('semester2').disabled = false;
+      document.getElementById('semesterOther').disabled = false;
+      document.getElementById('semesterOtherText').disabled = false;
+      document.getElementById('additionalDetails').disabled = false;
+      document.getElementById('startDate').disabled = false;
+      document.getElementById('endDate').disabled = false;
+      document.getElementById('rows').disabled = false;
+      document.getElementById('cols').disabled = false;
+      document.getElementById('rowGaps').disabled = false;
+      document.getElementById('colGaps').disabled = false;
+      document.getElementById('updateSeats').disabled = false;
+      
+      // Remove visual indication
+      const controlPanel = document.querySelector('.control-panel');
+      if (controlPanel) {
+        controlPanel.style.opacity = '1';
+        controlPanel.style.pointerEvents = 'auto';
+      }
+    }
 
     function getAvailableSeats() {
       const totalSeats = currentRows * currentCols;
@@ -1770,6 +1834,11 @@
       }
 
       const selectedStudent = availableStudents[parseInt(selectedIndex)];
+
+      // Lock form when first randomization starts
+      if (usedSeats.size === 0) {
+        lockForm();
+      }
 
       Swal.fire({
         title: '🎲 กำลังสุ่มที่นั่ง...',
@@ -1961,6 +2030,9 @@
           
           // Update seats grid
           updateSeatsGrid();
+          
+          // Unlock form after successful save
+          unlockForm();
           
           Swal.fire({
             icon: 'success',
@@ -2885,6 +2957,9 @@
       document.getElementById('saveBtn').style.display = 'none';
       updateSeatsGrid();
       
+      // Unlock form after clearing
+      unlockForm();
+      
       Swal.fire({
         icon: 'success',
         title: '✅ ล้างข้อมูลสำเร็จ',
@@ -2987,5 +3062,5 @@
       updateSeatsGrid();
     })();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99c52c0f05f9a192',t:'MTc2Mjc3Mzc0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99c6143681cfa1ba',t:'MTc2Mjc4MzI1Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
